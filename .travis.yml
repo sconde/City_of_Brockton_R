@@ -1,20 +1,25 @@
-language: r
 sudo: false
 cache: packages
 
 matrix:
   include:
-    - os: linux
+    - language: r
+      os: linux
       dist: trusty
       env: R_CODECOV=true
       sudo: required
+      before_install:
+          - sudo apt-get install libpoppler-cpp-dev
+      script:
+          - Rscript $TRAVIS_BUILD_DIR/src/crawler.R
+          - cd $TRAVIS_BUILD_DIR/src/ &&  Rscript $TRAVIS_BUILD_DIR/src/parser.R & cd $TRAVIS_BUILD_DIR
 
-before_install:
-    - sudo apt-get install libpoppler-cpp-dev
-
-script:
-    - Rscript $TRAVIS_BUILD_DIR/src/crawler.R
-    - cd $TRAVIS_BUILD_DIR/src/ &&  Rscript $TRAVIS_BUILD_DIR/src/parser.R & cd $TRAVIS_BUILD_DIR
+    - language: python
+      python: 3.7
+      before_script:
+          - cd python
+      script:
+          - python3 -c "print('hello world')"
 
 addons:
     apt:

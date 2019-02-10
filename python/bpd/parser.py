@@ -7,6 +7,8 @@ from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.converter import TextConverter
 from pdfminer.layout import LAParams
 from pdfminer.pdfpage import PDFPage
+import re
+import pandas as od
 
 class Parser():
     day_start_reg_ex = "^For Date:\s*(\d{2}\/\d{2}\/\d{4})\s*-\s*(\w*)"
@@ -36,36 +38,50 @@ class Parser():
         codec = 'utf-8'
         laparams = LAParams()
         device = TextConverter(rsrcmgr, retstr, codec=codec, laparams=laparams)
+
         with open(path, 'rb') as fp:
-            # fp = open(path, 'rb')
             interpreter = PDFPageInterpreter(rsrcmgr, device)
             password = ""
             maxpages = 0
             caching = True
             pagenos = set()
 
-            for page in PDFPage.get_pages(fp, pagenos, maxpages=maxpages, password=password, caching=caching, check_extractable=True):
+            for page in PDFPage.get_pages(fp, pagenos, maxpages=maxpages,
+                                          password=password, caching=caching,
+                                          check_extractable=True):
                 interpreter.process_page(page)
 
             text = retstr.getvalue()
 
-            # fp.close()
         device.close()
         retstr.close()
         return text
 
     def convert_text_to_df(self, txt):
-        import re
+        '''
+        purpose:
+        '''
+        chunk_of_calls = self._convert_to_chunk(txt)
+        list_chunk_of_calls = list(map(self._log_chunk, chunk_of_calls))
+        for call in list_chunk_of_calls:
+            df.append(df)
+
+
+
+    def _convert_to_chunk(self, txt):
+        '''
+        purpose: split the calls list into list of list. inner lists = distinct calls
+        '''
         txt = [t for t in txt if len(t.split()) > 0]
 
         call_ind = [i for i,item in enumerate(txt) if re.search(self.call_reg_ex, item)];
-        call_ind.append(-1)
+        call_ind.append(-1) # to signify EOF
         chunks = list(zip(call_ind[:-1],call_ind[1:]))
         chuncked_text = list(map(lambda y: txt[y[0]:y[1]], chunks))
         return chuncked_text
 
+
     def _log_chunk(self, this_chunk):
-        import re
         import pandas as pd
         # now to parse the chuncks
         # this_chunk = chuncked_text[0]
@@ -85,13 +101,14 @@ class Parser():
         # df = pd.DataFrame( columns=['Call Time','Call Reason','Location/Address'])
         data = {'Call Time':callTime, 'Call Reason':callReason, 'Location/Address':location_address}
         return pd.DataFrame(data, index=[call_number])
-        # return {call_number : pd.DataFrame([[callTime], [callReason], [location_address]],
-                                        # columns=['Call Time','Call Reason','Location/Address'])}
+    # return {call_number : pd.DataFrame([[callTime], [callReason], [location_address]],
+    # columns=['Call Time','Call Reason','Location/Address'])}
 
-    def get_df(self, chuncked_text):
-        import pandas as pd
-        A = list(map(self._log_chunk, chuncked_text))
-        df = pd.DataFrame()
-        for a in A:
-            df = df.append(a)
-        return df
+#    def get_df(self, chuncked_text):
+#        
+#        import pandas as pd
+#        A = list(map(self._log_chunk, chuncked_text))
+#        df = pd.DataFrame()
+#        for a in A:
+#            df = df.append(a)
+#        return df
